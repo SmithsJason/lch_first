@@ -1,7 +1,7 @@
-import { createApp } from 'vue';  // 确保只导入一次 createApp
+import { createApp } from 'vue'; 
 import App from './App.vue';
-import VueLazyload from 'vue-lazyload';  // 导入懒加载插件
+import VueLazyload from 'vue-lazyload';  
 
 createApp(App)
-  .use(VueLazyload)  // 使用懒加载插件
+  .use(VueLazyload)  
   .mount('#app');
