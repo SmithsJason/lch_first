@@ -13,13 +13,13 @@
   
   <script>
   import { ref, onMounted } from "vue";
-  import { debounce } from "lodash"; // 使用 lodash 函数库
+  import { debounce } from "lodash"; 
   
   export default {
   name: "App",
   setup() {
   const columns = ref([[], []]);
-  const loading = ref(false);  // 新增 loading 状态
+  const loading = ref(false);  
   const scrollContainer = ref(null);
   
   // 模拟生成图文数据
@@ -36,19 +36,19 @@
   
   // 加载新数据
   const loadMoreData = () => {
-    loading.value = true; // 开始加载
-    setTimeout(() => { // 模拟异步加载
+    loading.value = true; 
+    setTimeout(() => { 
       for (let i = 0; i < 6; i++) {
         const newItem = generateData();
-        // 分配数据到两列
+
         if (columns.value[0].length <= columns.value[1].length) {
           columns.value[0].push(newItem);
         } else {
           columns.value[1].push(newItem);
         }
       }
-      loading.value = false; // 加载完成
-    }, 1000); // 模拟 1 秒加载时间
+      loading.value = false; 
+    }, 1000); 
   };
   
   // 监听滚动事件
@@ -59,11 +59,11 @@
     ) {
       loadMoreData();
     }
-  }, 300); // 每 300ms 执行一次，减少滚动触发频率
+  }, 300); 
   
   // 初始化数据
   onMounted(() => {
-    loadMoreData(); // 初始加载数据
+    loadMoreData(); 
     scrollContainer.value.addEventListener("scroll", handleScroll);
   });
   
@@ -83,11 +83,11 @@
   padding: 20px;
   overflow-y: scroll;
   height: 100vh;
-  flex-wrap: wrap; /* 允许换行，确保响应式布局 */
+  flex-wrap: wrap;
   }
   
   .column {
-  flex: 1 0 48%; /* 每列占用大约 48% 的宽度 */
+  flex: 1 0 48%; 
   margin-bottom: 20px;
   }
   
