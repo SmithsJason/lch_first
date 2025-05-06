@@ -77,7 +77,7 @@ const form = ref({
   newPassword: '',
   confirmPassword: ''
 })
-
+console.log();
 const rules = {
   username: [
     { required: true, message: '用户名不能为空', trigger: 'blur' }
