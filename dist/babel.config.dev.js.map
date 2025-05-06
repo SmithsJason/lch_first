@@ -1,0 +1,1 @@
+{"version":3,"sources":["babel.config.js"],"names":["module","exports","plugins"],"mappings":";;AAAAA,MAAM,CAACC,OAAP,GAAiB;AACbC,EAAAA,OAAO,EAAE,CACP,0CADO;AADI,CAAjB","sourcesContent":["module.exports = {\r\n    plugins: [\r\n      '@babel/plugin-proposal-optional-chaining'\r\n    ]\r\n  };"],"file":"babel.config.dev.js"}
