@@ -1,46 +1,36 @@
 <template>
   <div class="friend-view">
     <div class="tabs">
-      <button
-        v-for="tabOption in tabs"
-        :key="tabOption.id"
-        :class="{ active: tab === tabOption.id }"
-        @click="tab = tabOption.id"
-      >
+      <button v-for="tabOption in tabs" :key="tabOption.id" :class="{ active: tab === tabOption.id }"
+        @click="tab = tabOption.id">
         {{ tabOption.label }}
       </button>
     </div>
+    <div v-if="tab === 'groups'" class="section">
+      <h2>群聊列表</h2>
+      <div v-if="isLoadingGroups" class="loading">加载中...</div>
+      <ul v-else-if="groups.length">
+        <li v-for="group in groups" :key="group.id" @click="enterGroupHandler(group)" style="cursor: pointer;">
+          <span>{{ group.name }} (ID: {{ group.id }})</span>
+        </li>
+      </ul>
+      <p v-else>暂无群聊</p>
+    </div>
     <div v-if="tab === 'search'" class="section">
       <h2>搜索用户</h2>
-      <input
-        ref="searchInput"
-        v-model.trim="searchQuery"
-        placeholder="输入用户名或账号"
-        @input="onInput"
-      />
+      <input ref="searchInput" v-model.trim="searchQuery" placeholder="输入用户名或账号" @input="onInput" />
       <div v-show="isSearching" class="loading">搜索中...</div>
       <div v-show="!isSearching">
         <ul v-if="searchResults.length">
           <li v-for="user in searchResults" :key="user.account">
             <div class="user-info">
-              <img
-                :src="user.avatar || defaultAvatar"
-                :alt="`${user.username}的头像`"
-                class="avatar"
-                @error="handleImageError($event, user)"
-              />
+              <img :src="user.avatar || defaultAvatar" :alt="`${user.username}的头像`" class="avatar"
+                @error="handleImageError($event, user)" />
               {{ user.username }} ({{ user.account }})
             </div>
             <div class="action-group">
-              <input
-                v-model="user.message"
-                placeholder="附言（可选）"
-                class="message-input"
-              />
-              <button
-                @click="sendFriendRequestHandler(user)"
-                :disabled="user.isSending"
-              >
+              <input v-model="user.message" placeholder="附言（可选）" class="message-input" />
+              <button @click="sendFriendRequestHandler(user)" :disabled="user.isSending">
                 {{ user.isSending ? '发送中...' : '发送好友请求' }}
               </button>
             </div>
@@ -51,21 +41,14 @@
     </div>
     <div v-if="tab === 'notifications'" class="section">
       <h2>通知</h2>
-      <button
-        @click="markAllReadHandler"
-        :disabled="!notifications.length || isMarkingAllRead"
-      >
+      <button @click="markAllReadHandler" :disabled="!notifications.length || isMarkingAllRead">
         {{ isMarkingAllRead ? '处理中...' : '全部标记为已读' }}
       </button>
       <ul v-if="notifications.length">
         <li v-for="request in notifications" :key="request.id">
           <div class="notification-content">
-            <img
-              :src="request.senderAvatar || defaultAvatar"
-              :alt="`${request.senderUsername || '用户'}的头像`"
-              class="avatar"
-              @error="handleImageError($event, request, 'senderAvatar')"
-            />
+            <img :src="request.senderAvatar || defaultAvatar" :alt="`${request.senderUsername || '用户'}的头像`"
+              class="avatar" @error="handleImageError($event, request, 'senderAvatar')" />
             <div class="notification-details">
               <span>{{ request.senderUsername || '未知用户' }} ({{ request.senderAccount }}) 请求添加你为好友</span>
               <p v-if="request.message" class="message">附言: {{ request.message }}</p>
@@ -76,16 +59,10 @@
             <span v-if="request.status === 'accepted'" class="status-text">已接受</span>
             <span v-else-if="request.status === 'rejected'" class="status-text">已拒绝</span>
             <template v-else>
-              <button
-                @click="handleFriendRequestHandler(request, 'accepted')"
-                :disabled="request.isProcessing"
-              >
+              <button @click="handleFriendRequestHandler(request, 'accepted')" :disabled="request.isProcessing">
                 {{ request.isProcessing ? '处理中...' : '接受' }}
               </button>
-              <button
-                @click="handleFriendRequestHandler(request, 'rejected')"
-                :disabled="request.isProcessing"
-              >
+              <button @click="handleFriendRequestHandler(request, 'rejected')" :disabled="request.isProcessing">
                 {{ request.isProcessing ? '处理中...' : '拒绝' }}
               </button>
             </template>
@@ -96,23 +73,34 @@
     </div>
     <div v-if="tab === 'friends'" class="section">
       <h2>好友列表</h2>
+      <button @click="showCreateGroupDialog = true" class="create-group-btn">创建群聊</button>
+      <el-dialog v-model="showCreateGroupDialog" title="创建群聊">
+        <el-input v-model="groupName" placeholder="请输入群聊名称" />
+        <el-checkbox-group v-model="selectedFriends">
+          <el-checkbox v-for="friend in friends" :key="friend.account" :label="friend.account">
+            {{ friend.username }}
+          </el-checkbox>
+        </el-checkbox-group>
+        <template #footer>
+          <el-button @click="showCreateGroupDialog = false">取消</el-button>
+          <el-button type="primary" @click="createGroupHandler">创建</el-button>
+        </template>
+      </el-dialog>
       <ul v-if="friends.length">
         <li v-for="friend in friends" :key="friend.account">
           <div class="user-info">
-            <img
-              :src="friend.avatar || defaultAvatar"
-              :alt="`${friend.username}的头像`"
-              class="avatar"
-              @error="handleImageError($event, friend)"
-            />
+            <img :src="friend.avatar || defaultAvatar" :alt="`${friend.username}的头像`" class="avatar"
+              @error="handleImageError($event, friend)" />
             {{ friend.username }} ({{ friend.account }})
           </div>
-          <button
-            @click="removeFriendHandler(friend)"
-            :disabled="friend.isRemoving"
-          >
-            {{ friend.isRemoving ? '删除中...' : '删除好友' }}
-          </button>
+          <div class="action-group">
+            <button @click="enterChatHandler(friend)">
+              进入聊天
+            </button>
+            <button @click="removeFriendHandler(friend)" :disabled="friend.isRemoving">
+              {{ friend.isRemoving ? '删除中...' : '删除好友' }}
+            </button>
+          </div>
         </li>
       </ul>
       <p v-else>暂无好友</p>
@@ -131,12 +119,15 @@ import {
   fetchFriends,
   removeFriend,
 } from '@/api/friends';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const currentAccount = ref(localStorage.getItem('account') || '');
 // 常量
 const tabs = [
   { id: 'friends', label: '好友列表' },
+  { id: 'groups', label: '群聊列表' },
   { id: 'search', label: '搜索用户' },
   { id: 'notifications', label: '通知' },
 ];
@@ -151,6 +142,12 @@ const friends = ref([]);
 const isSearching = ref(false);
 const isMarkingAllRead = ref(false);
 const searchInput = ref(null);
+const router = useRouter();
+const showCreateGroupDialog = ref(false);
+const groupName = ref('');
+const selectedFriends = ref([]);
+const groups = ref([]);
+const isLoadingGroups = ref(false);
 
 // 计算属性
 const hasNotifications = computed(() => notifications.value.length > 0);
@@ -194,12 +191,13 @@ const performSearch = async (query) => {
   isSearching.value = true;
   try {
     const users = await searchUsers(query, currentAccount.value);
-  
-    searchResults.value = users.map(user => reactive({
-      ...user,
-      isSending: false,
-      message: '',
-    }));
+    searchResults.value = users.map((user) =>
+      reactive({
+        ...user,
+        isSending: false,
+        message: '',
+      })
+    );
   } catch (error) {
     console.error('搜索错误:', error);
     ElMessage.error(error.message || '搜索失败，请稍后重试');
@@ -230,7 +228,11 @@ watch(searchQuery, (newQuery) => {
 const sendFriendRequestHandler = async (user) => {
   user.isSending = true;
   try {
-    const data = await sendFriendRequest(currentAccount.value, user.account, user.message);
+    const data = await sendFriendRequest(
+      currentAccount.value,
+      user.account,
+      user.message
+    );
     ElMessage.success(data.message);
     user.message = '';
   } catch (error) {
@@ -255,7 +257,11 @@ const fetchNotificationsHandler = async () => {
 const handleFriendRequestHandler = async (request, action) => {
   request.isProcessing = true;
   try {
-    const data = await handleFriendRequest(request.id, action, currentAccount.value);
+    const data = await handleFriendRequest(
+      request.id,
+      action,
+      currentAccount.value
+    );
     ElMessage.success(data.message);
     await Promise.all([
       fetchNotificationsHandler(),
@@ -299,25 +305,113 @@ const fetchFriendsHandler = async () => {
 };
 
 const removeFriendHandler = async (friend) => {
-  friend.isRemoving = true;
-  console.log('删除好友:', currentAccount.value, friend.account);
   try {
+    await ElMessageBox.confirm(`确定要删除好友 ${friend.username} 吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+    friend.isRemoving = true;
     const data = await removeFriend(currentAccount.value, friend.account);
     ElMessage.success(data.message);
     await fetchFriendsHandler();
   } catch (error) {
-    ElMessage.error(error.message || '删除好友失败');
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '删除好友失败');
+    }
   } finally {
     friend.isRemoving = false;
   }
 };
 
-// 生命周期
-onMounted(async () => {
-  if (!currentAccount.value) {
-    ElMessage.error('未登录，请先登录');
+
+const enterChatHandler = (friend) => {
+  router.push({ name: 'Chat', params: { account: friend.account } });
+};
+
+const createGroupHandler = async () => {
+  // 验证群聊名称
+  if (!groupName.value || groupName.value.trim() === '') {
+    ElMessage.error('请输入有效的群聊名称');
     return;
   }
+
+  // 验证成员列表（至少包含当前用户或其他成员）
+  if (selectedFriends.value.length === 0 && !currentAccount.value) {
+    ElMessage.error('请至少选择一名成员或确保已登录');
+    return;
+  }
+
+  // 构造成员列表，包含当前用户（如果后端要求）
+  const members = [...selectedFriends.value];
+  if (currentAccount.value && !members.includes(currentAccount.value)) {
+    members.push(currentAccount.value); // 添加当前用户
+  }
+
+  // 构造请求体
+  const requestBody = {
+    name: groupName.value.trim(),
+    members: members,
+  };
+
+  try {
+    const res = await axios.post(
+      'http://localhost:8080/api/group/create',
+      requestBody,
+     
+    );
+
+
+    if (res.data.code === 200) {
+      ElMessage.success('群聊创建成功');
+      showCreateGroupDialog.value = false;
+      groupName.value = ''; // 清空表单
+      selectedFriends.value = []; // 清空选择
+      await fetchGroupsHandler(); // 刷新群聊列表
+      router.push({ name: 'GroupChat', params: { groupId: res.data.data } });
+    } else {
+      ElMessage.error(res.data.message || '创建群聊失败');
+    }
+  } catch (e) {
+    console.error('创建群聊错误:', e.response?.data || e.message);
+    ElMessage.error(e.response?.data?.message || '创建群聊失败，请检查网络或服务器');
+  }
+};
+
+const fetchGroupsHandler = async () => {
+  isLoadingGroups.value = true;
+  try {
+    const account = localStorage.getItem('account');
+    if (!account) {
+      throw new Error('未登录，请先登录');
+    }
+    const res = await axios.get('http://localhost:8080/api/group/list', {
+      params: { account },
+    });
+    groups.value = res.data.groups || [];
+  } catch (e) {
+    console.error('获取群聊列表错误:', e.response?.data || e.message);
+    groups.value = [];
+    ElMessage.error('获取群聊列表失败');
+  } finally {
+    isLoadingGroups.value = false;
+  }
+};
+
+const enterGroupHandler = (group) => {
+  if (!group || !group.id) {
+    ElMessage.error('无法进入群聊:群组ID缺失');
+    return;
+  }
+  router.push({ name: 'GroupChat', params: { id: group.id } });
+};
+watch(tab, (newTab) => {
+  if (newTab === 'groups') {
+    fetchGroupsHandler();
+  }
+});
+// 生命周期
+onMounted(async () => {
   await Promise.all([fetchFriendsHandler(), fetchNotificationsHandler()]);
 });
 </script>
@@ -336,7 +430,8 @@ onMounted(async () => {
 
 /* Existing styles */
 .status-text {
-  color: #28a745; /* Green for accepted */
+  color: #28a745;
+  /* Green for accepted */
   font-weight: 500;
 }
 
@@ -456,5 +551,20 @@ button:hover:not(:disabled) {
   object-fit: cover;
   margin-right: 10px;
   vertical-align: middle;
+}
+
+.create-group-btn {
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.create-group-btn:hover:not(:disabled) {
+  background: #0056b3;
 }
 </style>

@@ -69,19 +69,16 @@ const fetchUserInfo = async (account) => {
 };
 
 const updateCurrentView = (view) => {
-  console.log('Updating view to:', view);
   emit('update:current-view', view);
 };
 
 const handleLogout = () => {
-  console.log('退出登录');
   userInfo.value = { avatar: null, username: null };
   localStorage.removeItem('account');
   emit('logout');
 };
 
 const handleImageError = (event) => {
-  console.log('头像加载失败', event);
   userInfo.value.avatar = '/default-avatar.png';
   emit('handle-image-error', event);
 };

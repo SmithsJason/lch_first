@@ -5,59 +5,26 @@
       <form @submit.prevent="handleRegister" class="register-form">
         <div class="input-group">
           <label class="input-label">账号</label>
-          <input 
-            v-model="account" 
-            type="text" 
-            class="tech-input" 
-            placeholder="请输入8位数字账号" 
-            required 
-            @input="validateAccount"
-          />
+          <input v-model="account" type="text" class="tech-input" placeholder="请输入8位数字账号" required
+            @input="validateAccount" />
         </div>
         <div class="input-group">
           <label class="input-label">密码</label>
-          <input 
-            v-model="password" 
-            type="password" 
-            class="tech-input" 
-            placeholder="请输入密码" 
-            required 
-          />
+          <input v-model="password" type="password" class="tech-input" placeholder="请输入密码" required />
         </div>
         <div class="input-group">
           <label class="input-label">确认密码</label>
-          <input 
-            v-model="confirmPassword" 
-            type="password" 
-            class="tech-input" 
-            placeholder="请再次输入密码" 
-            required 
-          />
+          <input v-model="confirmPassword" type="password" class="tech-input" placeholder="请再次输入密码" required />
         </div>
         <div class="input-group">
           <label class="input-label">用户名</label>
-          <input 
-            v-model="username" 
-            type="text" 
-            class="tech-input" 
-            placeholder="请输入用户名" 
-            required 
-          />
+          <input v-model="username" type="text" class="tech-input" placeholder="请输入用户名" required />
         </div>
         <div class="input-group">
           <label class="input-label">头像</label>
-          <input 
-            type="file" 
-            class="tech-file-input" 
-            @change="handleFileChange" 
-            accept="image/*" 
-          />
+          <input type="file" class="tech-file-input" @change="handleFileChange" accept="image/*" />
         </div>
-        <button 
-          type="submit" 
-          class="tech-button" 
-          :disabled="isUploading || !isFormValid"
-        >
+        <button type="submit" class="tech-button" :disabled="isUploading || !isFormValid">
           立即注册
         </button>
         <p class="login-link">
@@ -154,7 +121,6 @@ const handleRegister = async () => {
       }
     });
     ElMessage.success('注册成功');
-    console.log('注册成功:', response.data);
     router.push('/chat');
   } catch (error) {
     ElMessage.error('注册失败: ' + (error.response?.data?.message || error.message));
@@ -213,7 +179,8 @@ const handleRegister = async () => {
   text-align: right;
 }
 
-.tech-input, .tech-file-input {
+.tech-input,
+.tech-file-input {
   flex: 1;
   padding: 14px 18px;
   background: rgba(255, 255, 255, 0.05);
@@ -224,7 +191,8 @@ const handleRegister = async () => {
   transition: all 0.3s ease;
 }
 
-.tech-input:focus, .tech-file-input:focus {
+.tech-input:focus,
+.tech-file-input:focus {
   outline: none;
   border-color: #00e5ff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);

@@ -23,7 +23,7 @@
   import { ref, onMounted, onUnmounted, nextTick } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import { ElMessage } from 'element-plus';
-  import { fetchUserInfo } from '@/api/user'; // 假设有 API 获取用户信息
+ 
   
   const route = useRoute();
   const router = useRouter();

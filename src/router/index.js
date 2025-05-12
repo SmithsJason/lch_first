@@ -30,6 +30,18 @@ const routes = [
     ]
   },
   {
+    path: '/chat/:account',
+    name: 'Chat',
+    component: () => import('@/components/SingleChatView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/group/:id',
+    name: 'GroupChat',
+    component: () => import('@/components/GroupChatView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     name: 'Login',
     component: () => import('@/components/Login.vue')

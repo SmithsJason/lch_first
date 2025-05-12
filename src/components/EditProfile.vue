@@ -2,18 +2,13 @@
   <div class="edit-profile-container">
     <div class="profile-card">
       <h2 class="title">个人信息管理</h2>
-      
+
       <!-- 头像上传区域 -->
       <div class="avatar-section">
         <div class="avatar-preview">
           <img :src="form.avatar || '/default-avatar.png'" class="avatar" @error="handleImageError" />
           <div class="upload-overlay">
-            <input
-              type="file"
-              accept="image/*"
-              @change="handleFileChange"
-              class="file-input"
-            />
+            <input type="file" accept="image/*" @change="handleFileChange" class="file-input" />
             <i class="el-icon-upload"></i>
           </div>
         </div>
@@ -26,38 +21,18 @@
         </el-form-item>
 
         <el-form-item label="旧密码" prop="oldPassword">
-          <el-input
-            v-model="form.oldPassword"
-            type="password"
-            placeholder="请输入当前密码"
-            show-password
-          />
+          <el-input v-model="form.oldPassword" type="password" placeholder="请输入旧密码" @blur="checkOldPassword" />
         </el-form-item>
 
         <el-form-item label="新密码" prop="newPassword">
-          <el-input
-            v-model="form.newPassword"
-            type="password"
-            placeholder="请输入新密码（留空不修改）"
-            show-password
-          />
+          <el-input v-model="form.newPassword" type="password" placeholder="请输入新密码（留空不修改）" show-password />
         </el-form-item>
 
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="请再次输入新密码"
-            show-password
-          />
+          <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入新密码" show-password />
         </el-form-item>
 
-        <el-button
-          type="primary"
-          class="submit-btn"
-          :loading="isSubmitting"
-          @click="submitForm"
-        >
+        <el-button type="primary" class="submit-btn" :loading="isSubmitting" @click="submitForm">
           保存修改
         </el-button>
       </el-form>
@@ -70,6 +45,9 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import OSS from 'ali-oss'
+
+
+
 const form = ref({
   avatar: '',
   username: '',
@@ -77,7 +55,8 @@ const form = ref({
   newPassword: '',
   confirmPassword: ''
 })
-console.log(111111);
+
+
 const rules = {
   username: [
     { required: true, message: '用户名不能为空', trigger: 'blur' }
@@ -95,6 +74,8 @@ const fetchUserInfo = async () => {
     const response = await axios.get('http://localhost:8080/api/user/info', {
       params: { account }
     })
+    console.log(response.data)
+    
     form.value = { ...response.data, oldPassword: '', newPassword: '', confirmPassword: '' }
   } catch (error) {
     ElMessage.error('获取用户信息失败')
@@ -115,31 +96,54 @@ const handleFileChange = async (event) => {
   }
 }
 
+// 提交更新表单
 const submitForm = async () => {
   try {
-    isSubmitting.value = true
+   
+    isSubmitting.value = true;
     const payload = {
       account: localStorage.getItem('account'),
       username: form.value.username,
-      ...(form.value.newPassword && { newPassword: form.value.newPassword }),
-      oldPassword: form.value.oldPassword
-    }
+      ...(form.value.newPassword && { newPassword: form.value.newPassword })
+    };
 
-    await axios.put('http://localhost:8080/api/user/update', payload)
-    ElMessage.success('信息更新成功')
+    await axios.put('http://localhost:8080/api/user/update', payload);
+    ElMessage.success('信息更新成功');
+    //延迟刷新
     setTimeout(() => {
-      window.location.reload()
-    }, 1500)
+      window.location.reload();
+    }, 1500);
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || '更新失败')
+    ElMessage.error(error.response?.data?.message || '更新失败');
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
-}
-
+};
 const handleImageError = (event) => {
   event.target.src = '/default-avatar.png'
 }
+
+const checkOldPassword = async () => {
+  if (!form.value.oldPassword) return;
+  try {
+    const account = localStorage.getItem('account');
+    const response = await axios.post('http://localhost:8080/api/user/check-password', {
+      account,
+      oldPassword: form.value.oldPassword
+    });
+    
+    if (response.data.code === 200) {
+      ElMessage.success('旧密码验证成功');
+    } else {
+      ElMessage.error('旧密码输入错误，请重新输入');
+      form.value.oldPassword = '';
+    }
+  } catch (error) {
+    console.error('检查旧密码失败:', error);
+    ElMessage.error(error.response?.data?.message || '检查旧密码失败，请稍后重试');
+    form.value.oldPassword = '';
+  }
+};
 
 onMounted(fetchUserInfo)
 </script>
@@ -155,7 +159,7 @@ onMounted(fetchUserInfo)
   background: #fff;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-section {
@@ -179,7 +183,7 @@ onMounted(fetchUserInfo)
   position: absolute;
   bottom: 0;
   right: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -191,7 +195,7 @@ onMounted(fetchUserInfo)
 }
 
 .upload-overlay:hover {
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
 }
 
 .file-input {
