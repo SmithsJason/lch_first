@@ -2,7 +2,7 @@
   <div class="sidebar">
     <div class="user-profile">
       <div class="avatar-container">
-        <img :src="userInfo.avatar || '/default-avatar.png'" class="avatar" @error="handleImageError" />
+        <img :src="userInfo.avatar || 'defaultAvatar'" class="avatar" @error="handleImageError" />
         <div class="edit-overlay">
           <i class="el-icon-edit"></i>
         </div>
@@ -33,6 +33,8 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import router from '@/router';
+// 默认头像路径
+const defaultAvatar = new URL('@/assets/img/001.jpg', import.meta.url).href;
 
 const props = defineProps({
   currentView: {
@@ -79,7 +81,7 @@ const handleLogout = () => {
 };
 
 const handleImageError = (event) => {
-  userInfo.value.avatar = '/default-avatar.png';
+  event.target.src = defaultAvatar;
   emit('handle-image-error', event);
 };
 

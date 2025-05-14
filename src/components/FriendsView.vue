@@ -123,7 +123,9 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
+// 当前用户账号
 const currentAccount = ref(localStorage.getItem('account') || '');
+
 // 常量
 const tabs = [
   { id: 'friends', label: '好友列表' },
@@ -131,9 +133,9 @@ const tabs = [
   { id: 'search', label: '搜索用户' },
   { id: 'notifications', label: '通知' },
 ];
-const defaultAvatar = 'https://via.placeholder.com/40';
+// 使用本地默认头像
+const defaultAvatar = new URL('@/assets/img/001.jpg', import.meta.url).href;
 
-// 状态
 const tab = ref('search');
 const searchQuery = ref('');
 const searchResults = ref([]);
@@ -324,7 +326,6 @@ const removeFriendHandler = async (friend) => {
   }
 };
 
-
 const enterChatHandler = (friend) => {
   router.push({ name: 'Chat', params: { account: friend.account } });
 };
@@ -357,10 +358,8 @@ const createGroupHandler = async () => {
   try {
     const res = await axios.post(
       'http://localhost:8080/api/group/create',
-      requestBody,
-     
+      requestBody
     );
-
 
     if (res.data.code === 200) {
       ElMessage.success('群聊创建成功');
@@ -405,11 +404,13 @@ const enterGroupHandler = (group) => {
   }
   router.push({ name: 'GroupChat', params: { id: group.id } });
 };
+
 watch(tab, (newTab) => {
   if (newTab === 'groups') {
     fetchGroupsHandler();
   }
 });
+
 // 生命周期
 onMounted(async () => {
   await Promise.all([fetchFriendsHandler(), fetchNotificationsHandler()]);

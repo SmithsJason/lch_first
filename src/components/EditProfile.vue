@@ -2,11 +2,10 @@
   <div class="edit-profile-container">
     <div class="profile-card">
       <h2 class="title">个人信息管理</h2>
-
       <!-- 头像上传区域 -->
       <div class="avatar-section">
         <div class="avatar-preview">
-          <img :src="form.avatar || '/default-avatar.png'" class="avatar" @error="handleImageError" />
+          <img :src="form.avatar || defaultAvatar" class="avatar" @error="handleImageError" />
           <div class="upload-overlay">
             <input type="file" accept="image/*" @change="handleFileChange" class="file-input" />
             <i class="el-icon-upload"></i>
@@ -41,87 +40,102 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import axios from 'axios'
-import OSS from 'ali-oss'
+import { ref, onMounted } from 'vue';
+import { ElMessage } from 'element-plus';
+import axios from 'axios';
 
-
+// 默认头像路径
+const defaultAvatar = new URL('@/assets/img/001.jpg', import.meta.url).href;
 
 const form = ref({
   avatar: '',
   username: '',
   oldPassword: '',
   newPassword: '',
-  confirmPassword: ''
-})
-
+  confirmPassword: '',
+});
 
 const rules = {
   username: [
-    { required: true, message: '用户名不能为空', trigger: 'blur' }
+    { required: true, message: '用户名不能为空', trigger: 'blur' },
   ],
   oldPassword: [
-    { required: true, message: '需要验证当前密码', trigger: 'blur' }
-  ]
-}
+    { required: true, message: '需要验证当前密码', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    {
+      validator: (rule, value, callback) => {
+        if (form.value.newPassword && !value) {
+          callback(new Error('请再次输入新密码'));
+        } else if (form.value.newPassword && value !== form.value.newPassword) {
+          callback(new Error('两次输入的密码不一致'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur',
+    },
+  ],
+};
 
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
+const isUploading = ref(false);
 
 const fetchUserInfo = async () => {
   try {
-    const account = localStorage.getItem('account')
-    const response = await axios.get('http://localhost:8080/api/user/info', {
-      params: { account }
-    })
-    console.log(response.data)
-    
-    form.value = { ...response.data, oldPassword: '', newPassword: '', confirmPassword: '' }
-  } catch (error) {
-    ElMessage.error('获取用户信息失败')
-  }
-}
-
-const handleFileChange = async (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    try {
-      const fileName = `avatars/${Date.now()}-${file.name}`
-      const result = await ossClient.put(fileName, file)
-      form.value.avatar = result.url
-      ElMessage.success('头像更新成功')
-    } catch (error) {
-      ElMessage.error('头像上传失败')
+    const account = localStorage.getItem('account');
+    if (!account) {
+      throw new Error('未登录，请先登录');
     }
-  }
-}
-
-// 提交更新表单
-const submitForm = async () => {
-  try {
-   
-    isSubmitting.value = true;
-    const payload = {
-      account: localStorage.getItem('account'),
-      username: form.value.username,
-      ...(form.value.newPassword && { newPassword: form.value.newPassword })
+    const response = await axios.get('http://localhost:8080/api/user/info', {
+      params: { account },
+    });
+    console.log('用户信息:', response.data);
+    form.value = {
+      avatar: response.data.avatar || '',
+      username: response.data.username || '',
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     };
-
-    await axios.put('http://localhost:8080/api/user/update', payload);
-    ElMessage.success('信息更新成功');
-    //延迟刷新
-    setTimeout(() => {
-      window.location.reload();
-    }, 1500);
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || '更新失败');
-  } finally {
-    isSubmitting.value = false;
+    ElMessage.error(error.message || '获取用户信息失败');
   }
 };
+
+const handleFileChange = async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    try {
+      isUploading.value = true;
+      ElMessage.info('头像上传中...');
+
+      // 使用 FormData 发送文件到后端
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await axios.post('http://localhost:8080/api/upload/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // 后端返回图片的 URL
+      form.value.avatar = response.data.url;
+      ElMessage.success('头像上传成功');
+    } catch (error) {
+      ElMessage.error('头像上传失败: ' + (error.response?.data?.message || error.message));
+      console.error('上传失败:', error);
+    } finally {
+      isUploading.value = false;
+    }
+  }
+};
+
 const handleImageError = (event) => {
-  event.target.src = '/default-avatar.png'
-}
+  console.warn('头像加载失败，使用默认头像');
+  event.target.src = defaultAvatar;
+};
 
 const checkOldPassword = async () => {
   if (!form.value.oldPassword) return;
@@ -129,9 +143,9 @@ const checkOldPassword = async () => {
     const account = localStorage.getItem('account');
     const response = await axios.post('http://localhost:8080/api/user/check-password', {
       account,
-      oldPassword: form.value.oldPassword
+      oldPassword: form.value.oldPassword,
     });
-    
+
     if (response.data.code === 200) {
       ElMessage.success('旧密码验证成功');
     } else {
@@ -145,7 +159,43 @@ const checkOldPassword = async () => {
   }
 };
 
-onMounted(fetchUserInfo)
+const submitForm = async () => {
+  try {
+    // 验证表单
+    await profileForm.value.validate();
+
+    isSubmitting.value = true;
+    const account = localStorage.getItem('account');
+    if (!account) {
+      throw new Error('未登录，请先登录');
+    }
+
+    const payload = {
+      account,
+      username: form.value.username,
+      avatar: form.value.avatar || '',
+      ...(form.value.newPassword && { newPassword: form.value.newPassword }),
+    };
+
+    const response = await axios.put('http://localhost:8080/api/user/update', payload);
+    ElMessage.success('信息更新成功');
+    // 延迟刷新页面
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '更新失败');
+    console.error('更新失败:', error);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+// 引用表单实例
+const profileForm = ref(null);
+
+// 组件挂载时获取用户信息
+onMounted(fetchUserInfo);
 </script>
 
 <style scoped>
@@ -177,6 +227,7 @@ onMounted(fetchUserInfo)
   height: 120px;
   border-radius: 50%;
   border: 3px solid #f0f0f0;
+  object-fit: cover;
 }
 
 .upload-overlay {
