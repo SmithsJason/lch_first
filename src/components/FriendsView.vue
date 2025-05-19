@@ -24,8 +24,11 @@
         <ul v-if="searchResults.length">
           <li v-for="user in searchResults" :key="user.account">
             <div class="user-info">
-              <img :src="user.avatar || defaultAvatar" :alt="`${user.username}的头像`" class="avatar"
-                @error="handleImageError($event, user)" />
+              <!--远程存储oss过期，先使用本地图片进行展示-->
+              <!-- <img :src="user.avatar || defaultAvatar" :alt="`${user.username}的头像`" class="avatar"
+                @error="handleImageError($event, user)"  -->
+              <img :src="defaultAvatar" :alt="`${user.username}的头像`" class="avatar"
+                />
               {{ user.username }} ({{ user.account }})
             </div>
             <div class="action-group">
@@ -47,8 +50,11 @@
       <ul v-if="notifications.length">
         <li v-for="request in notifications" :key="request.id">
           <div class="notification-content">
-            <img :src="request.senderAvatar || defaultAvatar" :alt="`${request.senderUsername || '用户'}的头像`"
-              class="avatar" @error="handleImageError($event, request, 'senderAvatar')" />
+            <!--远程存储oss过期，先使用本地图片进行展示-->
+            <!-- <img :src="request.senderAvatar || defaultAvatar" :alt="`${request.senderUsername || '用户'}的头像`"
+              class="avatar" @error="handleImageError($event, request, 'senderAvatar')" /> -->
+              <img :src="request.senderAvatar || defaultAvatar" :alt="`${request.senderUsername || '用户'}的头像`"
+              class="avatar"  />
             <div class="notification-details">
               <span>{{ request.senderUsername || '未知用户' }} ({{ request.senderAccount }}) 请求添加你为好友</span>
               <p v-if="request.message" class="message">附言: {{ request.message }}</p>

@@ -90,7 +90,7 @@ const fetchUserInfo = async () => {
     const response = await axios.get('http://localhost:8080/api/user/info', {
       params: { account },
     });
-    console.log('用户信息:', response.data);
+    // console.log('用户信息:', response.data);
     form.value = {
       avatar: response.data.avatar || '',
       username: response.data.username || '',
